@@ -35,7 +35,7 @@ def main():
     # build subreddits
     subreddit_string = reddit.user.me().subreddit.display_name
     if len(ACTIVE_SUBREDDITS):
-        subreddit_string += '+'.join(ACTIVE_SUBREDDITS)
+        subreddit_string += '+' + '+'.join(ACTIVE_SUBREDDITS)
     subreddits = reddit.subreddit(subreddit_string)
     # poll subreddits
     comments_count = 0
