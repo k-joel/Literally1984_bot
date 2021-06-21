@@ -4,7 +4,7 @@ import time
 import logging
 
 ACTIVE_SUBREDDITS = [
-    # 'PoliticalCompassMemes',
+    'PoliticalCompassMemes',
 ]
 
 SEARCH_TEXT = "literally 1984"
