@@ -5,12 +5,18 @@ import logging
 import random
 
 ACTIVE_SUBREDDITS = [
+    'testingground4bots',
     'PoliticalCompassMemes',
+    'reclassified',
+]
+
+IGNORED_USERS = [
+    'basedcount_bot'
 ]
 
 SEARCH_TEXT = "literally 1984"
 
-ANSWER_TEXT = """
+ANSWER_TEXT_OLD = """
     ⠀⠀⠀⠀⠀⠀⠀⣠⡀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠤⠤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀ 
     ⠀⠀⠀⠀⠀⢀⣾⣟⠳⢦⡀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠉⠉⠉⠉⠉⠒⣲⡄ 
     ⠀⠀⠀⠀⠀⣿⣿⣿⡇⡇⡱⠲⢤⣀⠀⠀⠀⢸.⠀1984⠀⣠⠴⠊⢹⠁ 
@@ -24,6 +30,23 @@ ANSWER_TEXT = """
     ⡞⠀⠀⠀⠀⠀⠀⠀⣄⠀⠀⠀⠀⠀⠀⡰⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
     ⢧⠀⠀⠀⠀⠀⠀⠀⠈⠣⣀⠀⠀⡰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 """
+
+ANSWER_TEXT = """
+    ⠀⠀⠀⠀⠀⠀⠀⣠⡀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠤⠤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀ 
+    ⠀⠀⠀⠀⠀⢀⣾⣟⠳⢦⡀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠉⠉⠉⠉⠉⠒⣲⡄ 
+    ⠀⠀⠀⠀⠀⣿⣿⣿⡇⡇⡱⠲⢤⣀⠀⠀⠀⢸⠀⠀⠀1984⠀⣠⠴⠊⢹⠁ 
+    ⠀⠀⠀⠀⠀⠘⢻⠓⠀⠉⣥⣀⣠⠞⠀⠀⠀⢸⠀⠀⠀⠀⢀⡴⠋⠀⠀⠀⢸⠀ 
+    ⠀⠀⠀⠀⢀⣀⡾⣄⠀⠀⢳⠀⠀⠀⠀⠀⠀⢸⢠⡄⢀⡴⠁ 2021⠀⡞⠀ 
+    ⠀⠀⠀⣠⢎⡉⢦⡀⠀⠀⡸⠀⠀⠀⠀⠀⢀⡼⣣⠧⡼⠀⠀⠀⠀⠀⠀⢠⠇⠀ 
+    ⠀⢀⡔⠁⠀⠙⠢⢭⣢⡚⢣⠀⠀⠀⠀⠀⢀⣇⠁⢸⠁⠀⠀⠀⠀⠀⠀⢸⠀⠀ 
+    ⠀⡞⠀⠀⠀⠀⠀⠀⠈⢫⡉⠀⠀⠀⠀⢠⢮⠈⡦⠋⠀⠀⠀⠀⠀⠀⠀⣸⠀⠀ 
+    ⢀⠇⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⣀⡴⠃⠀⡷⡇⢀⡴⠋⠉⠉⠙⠓⠒⠃⠀⠀ 
+    ⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠀⠀⡼⠀⣷⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+    ⡞⠀⠀⠀⠀⠀⠀⠀⣄⠀⠀⠀⠀⠀⠀⡰⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+    ⢧⠀⠀⠀⠀⠀⠀⠀⠈⠣⣀⠀⠀⡰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+"""
+
+QUOTE_COMMAND = "!quote 1984"
 
 QUOTES = [
     "War is peace. Freedom is slavery. Ignorance is strength.",
@@ -41,76 +64,9 @@ QUOTES = [
 ]
 
 
-BOOK = """
-        __________________   ___________________
-    .-/|                  \ /                   |\-.
-    ||||                   |   War is peace.    ||||
-    ||||                   |                    ||||
-    ||||       1984        | Freedom is slavery ||||
-    ||||                   |                    ||||
-    ||||                   |    Ignorance is    ||||
-    ||||                   |      strength      ||||
-    ||||                   |                    ||||
-    ||||__________________ | ___________________||||
-    ||/===================\|/====================\||
-    `--------------------~___~--------------------''
-"""
-
-
-BOOK2 = """
-        __________________   __________________
-    .-/|                  \ /                  |\-.
-    ||||  One does not     |  one makes the    ||||
-    ||||  establish a      |  revolution in    ||||
-    ||||  dictatorship     |  order to         ||||
-    ||||  in order to      |  establish the    ||||
-    ||||  safeguard a      |  dictatorship.    ||||
-    ||||  revolution...    |                   ||||
-    ||||                   |                   ||||
-    ||||__________________ | __________________||||
-    ||/===================\|/===================\||
-    `--------------------~___~-------------------''
-"""
-
-BOOK3 = """
-        __________________   __________________
-    .-/|                  \ /                  |\-.
-    ||||                   | Power is in       ||||
-    ||||                   | tearing human     ||||
-    ||||       1984        | minds to pieces   ||||
-    ||||                   | and putting them  ||||
-    ||||                   | together again    ||||
-    ||||                   | in new shapes of  ||||
-    ||||                   | your own choosing ||||
-    ||||__________________ | __________________||||
-    ||/===================\|/===================\||
-    `--------------------~___~-------------------''
-"""
-
-BOOK4 = """
-        __________________   __________________
-    .-/|                  \ /                  |\-.
-    ||||                   | We know that      ||||
-    ||||                   | no one ever       ||||
-    ||||       1984        | seizes power      ||||
-    ||||                   | with the          ||||
-    ||||                   | intention of      ||||
-    ||||                   | relinquishing it  ||||
-    ||||                   |                   ||||
-    ||||__________________ | __________________||||
-    ||/===================\|/===================\||
-    `--------------------~___~-------------------''
-"""
-
-REPLIES = [ANSWER_TEXT] * 3 + [BOOK, BOOK2, BOOK3]
-REPLY_INDEX = 0
-
-
-def get_next_reply():
-    global REPLY_INDEX
-    reply = REPLIES[REPLY_INDEX]
-    REPLY_INDEX = (REPLY_INDEX + 1) % len(REPLIES)
-    return reply
+def get_random_quote():
+    index = random.randint(0, len(QUOTES) - 1)
+    return QUOTES[index]
 
 
 def main():
@@ -129,17 +85,22 @@ def main():
     comments_count = 0
     logging.info('Polling /r/' + subreddit_string)
     for comment in subreddits.stream.comments(pause_after=10, skip_existing=True):
-        if comment == None:  # or comment.author == reddit.user.me():
+        if comment == None:
             continue
-        if len(comment.body) < len(SEARCH_TEXT) or SEARCH_TEXT not in comment.body.lower():
+        if comment.author.name in IGNORED_USERS:
+            logging.info('Skipping user: ' + comment.author.name)
             continue
-        if comment.author.name == 'basedcount_bot':
-            logging.info('Skipping reply to u/basedcount_bot')
-            continue
-        comments_count += 1
-        logging.info('Replying to u/%s in r/%s. Comment #%s' %
-                     (comment.author.name, comment.subreddit.display_name, str(comments_count)))
-        comment.reply(ANSWER_TEXT)
+        if comment.body[0] == '!' and len(comment.body) >= len(QUOTE_COMMAND) and comment.body[:len(QUOTE_COMMAND)] == QUOTE_COMMAND:
+            comments_count += 1
+            logging.info('#%s: Quote requested by u/%s in r/%s.' %
+                         (str(comments_count), comment.author.name, comment.subreddit.display_name))
+            quote = get_random_quote()
+            comment.reply(quote)
+        elif len(comment.body) >= len(SEARCH_TEXT) and SEARCH_TEXT in comment.body.lower():
+            comments_count += 1
+            logging.info('#%s: Replying to u/%s in r/%s.' %
+                         (str(comments_count), comment.author.name, comment.subreddit.display_name))
+            comment.reply(ANSWER_TEXT)
 
 
 def main_ex():
