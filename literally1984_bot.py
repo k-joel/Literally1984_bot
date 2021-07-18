@@ -135,9 +135,4 @@ def main_ex():
 
 
 if __name__ == "__main__":
-    # main_ex()
-    while True:
-        i = input()
-        if i == 'q':
-            break
-        print()
+    main_ex()
