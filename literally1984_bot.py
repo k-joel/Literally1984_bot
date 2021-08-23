@@ -72,19 +72,53 @@ QUOTES = [
     "The best books...  are those that tell you what you know already.",
 ]
 
-QUOTE_INDEX = 0
+COOLDOWN = 300
 
 
-def get_next_quote():
-    global QUOTE_INDEX
-    quote = QUOTES[QUOTE_INDEX]
-    QUOTE_INDEX = (QUOTE_INDEX + 1) % len(QUOTES)
-    return quote
+class QuoteGen:
+    def __init__(self):
+        self.index = 0
+
+    def get_next_quote(self):
+        quote = QUOTES[self.index]
+        self.index = (self.index + 1) % len(QUOTES)
+        return quote
+
+    def get_rand_quote(self):
+        while True:
+            index = random.randint(0, len(QUOTES) - 1)
+            if self.index != index:
+                self.index = index
+                break
+        return QUOTES[index]
 
 
-def get_random_quote():
-    index = random.randint(0, len(QUOTES) - 1)
-    return QUOTES[index]
+class UserCooldown:
+    def __init__(self):
+        self.users = dict()
+
+    def is_user_ready(self, name):
+        # remove if cooldown has expired
+        curr_time = time.time()
+        to_del = []
+        for user, prev_time in self.users.items():
+            if curr_time - prev_time >= COOLDOWN:
+                to_del.append(user)
+        for user in to_del:
+            del self.users[user]
+
+        if name in self.users:
+            return False
+        self.users[name] = curr_time
+        return True
+
+
+def requested_quote(body):
+    return body[0] == '!' and len(body) >= len(QUOTE_COMMAND) and body[:len(QUOTE_COMMAND)] == QUOTE_COMMAND
+
+
+def requested_reply(body):
+    return len(body) >= len(SEARCH_TEXT) and SEARCH_TEXT in body.lower()
 
 
 def main():
@@ -92,29 +126,44 @@ def main():
     logging.basicConfig(
         format='[%(asctime)s] %(levelname)-8s %(message)s', level=logging.INFO)
     logging.info('--- Literally 1984 bot started ---')
+
     # make the reddit instance
     reddit = praw.Reddit("Literally1984_bot", config_interpolation="basic")
+
     # build subreddits
     subreddit_string = reddit.user.me().subreddit.display_name
     if len(ACTIVE_SUBREDDITS):
         subreddit_string += '+' + '+'.join(ACTIVE_SUBREDDITS)
     subreddits = reddit.subreddit(subreddit_string)
+
     # poll subreddits
     comments_count = 0
     logging.info('Polling /r/' + subreddit_string)
+
+    qg = QuoteGen()
+    uc = UserCooldown()
+
     for comment in subreddits.stream.comments(pause_after=10, skip_existing=True):
         if comment == None:
             continue
+
         if comment.author.name in IGNORED_USERS:
             logging.info('Skipping user: ' + comment.author.name)
             continue
-        if comment.body[0] == '!' and len(comment.body) >= len(QUOTE_COMMAND) and comment.body[:len(QUOTE_COMMAND)] == QUOTE_COMMAND:
+
+        if requested_quote(comment.body):
+            if not uc.is_user_ready(comment.author.name):
+                logging.info('User on cooldown: ' + comment.author.name)
+                continue
             comments_count += 1
             logging.info('#%s: Quote requested by u/%s in r/%s.' %
                          (str(comments_count), comment.author.name, comment.subreddit.display_name))
-            quote = get_next_quote()
+            quote = qg.get_next_quote()
             comment.reply("\'" + quote + "\'")
-        elif len(comment.body) >= len(SEARCH_TEXT) and SEARCH_TEXT in comment.body.lower():
+        elif requested_reply(comment.body):
+            if not uc.is_user_ready(comment.author.name):
+                logging.info('User on cooldown: ' + comment.author.name)
+                continue
             comments_count += 1
             logging.info('#%s: Replying to u/%s in r/%s.' %
                          (str(comments_count), comment.author.name, comment.subreddit.display_name))
@@ -132,6 +181,23 @@ def main_ex():
         else:
             logging.info('--- Literally 1984 bot stopped ---')
             break
+
+
+def test_quotes():
+    qg = QuoteGen()
+    for _ in range(10):
+        print(qg.get_next_quote())
+    print("---")
+    for _ in range(10):
+        print(qg.get_rand_quote())
+
+
+def test_cooldowns():
+    uc = UserCooldown()
+    for i in range(20):
+        n = random.choice(("Alice", "Bob", "Steve"))
+        print(i, n, uc.is_user_ready(n))
+        time.sleep(1)
 
 
 if __name__ == "__main__":
