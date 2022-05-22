@@ -31,17 +31,15 @@ ANSWER_TEXT = """
 """
 
 QUOTE_COMMAND = "!quote 1984"
+QUOTE_FILENAME = "quotes.txt"
 
 COOLDOWN = 300
 
-
 class QuoteGen:
-    def __init__(self):
+    def __init__(self, filename):
         self.index = 0
         self.quotes = []
-
-    def load_file(self):
-        with open("quotes.txt") as file:
+        with open(filename) as file:
             self.quotes = [line.strip() for line in file]
 
     def get_next_quote(self):
@@ -62,6 +60,9 @@ class UserCooldown:
     def __init__(self, cooldown):
         self.users = dict()
         self.cooldown = cooldown
+
+    def reset(self):
+        self.users.clear()
 
     def is_user_ready(self, name):
         # remove if cooldown has expired
@@ -87,73 +88,77 @@ def requested_reply(body, trigger):
     return len(body) >= len(trigger) and trigger in body.lower()
 
 
-def run_bot():
-    # setup logger
-    logging.basicConfig(
-        format='[%(asctime)s] %(levelname)-8s %(message)s', level=logging.INFO)
-    logging.info('--- Literally 1984 bot started ---')
+class Bot:
+    def __init__(self):
+        self.qg = QuoteGen(QUOTE_FILENAME)
+        self.uc = UserCooldown(COOLDOWN)
 
-    # make the reddit instance
-    reddit = praw.Reddit("Literally1984_bot", config_interpolation="basic")
+    def run(self):
+        # make the reddit instance
+        reddit = praw.Reddit("Literally1984_bot", config_interpolation="basic")
 
-    # build subreddits
-    subreddit_string = reddit.user.me().subreddit.display_name
-    if len(ACTIVE_SUBREDDITS):
-        subreddit_string += '+' + '+'.join(ACTIVE_SUBREDDITS)
-    subreddits = reddit.subreddit(subreddit_string)
+        # build subreddits
+        subreddit_string = reddit.user.me().subreddit.display_name
+        if len(ACTIVE_SUBREDDITS):
+            subreddit_string += '+' + '+'.join(ACTIVE_SUBREDDITS)
+        subreddits = reddit.subreddit(subreddit_string)
 
-    # poll subreddits
-    comments_count = 0
-    logging.info('Polling /r/' + subreddit_string)
+        # poll subreddits
+        comments_count = 0
+        logging.info('Polling /r/' + subreddit_string)
 
-    qg = QuoteGen()
-    qg.load_file()
+        # reset cooldowns
+        self.uc.reset()
 
-    uc = UserCooldown(COOLDOWN)
-
-    for comment in subreddits.stream.comments(pause_after=10, skip_existing=True):
-        if comment == None:
-            continue
-
-        if comment.author.name in IGNORED_USERS:
-            logging.info('Skipping user: ' + comment.author.name)
-            continue
-
-        if requested_quote(comment.body, QUOTE_COMMAND):
-            if not uc.is_user_ready(comment.author.name):
-                logging.info('User on cooldown: ' + comment.author.name)
+        for comment in subreddits.stream.comments(pause_after=10, skip_existing=True):
+            if comment == None:
                 continue
-            comments_count += 1
-            logging.info('#%s: Quote requested by u/%s in r/%s.' %
-                         (str(comments_count), comment.author.name, comment.subreddit.display_name))
-            quote = qg.get_next_quote()
-            comment.reply("\'" + quote + "\'")
-        elif requested_reply(comment.body, SEARCH_TEXT):
-            if not uc.is_user_ready(comment.author.name):
-                logging.info('User on cooldown: ' + comment.author.name)
-                continue
-            comments_count += 1
-            logging.info('#%s: Replying to u/%s in r/%s.' %
-                         (str(comments_count), comment.author.name, comment.subreddit.display_name))
-            comment.reply(ANSWER_TEXT)
+
+            if comment.author.name in IGNORED_USERS:
+                logging.info('User ignored: ' + comment.author.name)
+                continue            
+
+            if requested_quote(comment.body, QUOTE_COMMAND):
+                if not self.uc.is_user_ready(comment.author.name):
+                    logging.info('User on cooldown: ' + comment.author.name)
+                    continue
+                comments_count += 1
+                logging.info('#%s: Quote requested by u/%s in r/%s.' %
+                             (str(comments_count), comment.author.name, comment.subreddit.display_name))
+                quote = self.qg.get_next_quote()
+                if quote and len(quote) != 0:
+                    comment.reply(body = "\'" + quote + "\'")
+            elif requested_reply(comment.body, SEARCH_TEXT):
+                if not self.uc.is_user_ready(comment.author.name):
+                    logging.info('User on cooldown: ' + comment.author.name)
+                    continue
+                comments_count += 1
+                logging.info('#%s: Replying to u/%s in r/%s.' %
+                             (str(comments_count), comment.author.name, comment.subreddit.display_name))
+                comment.reply(body = ANSWER_TEXT)
 
 
 def main():
+    # setup logger
+    logging.basicConfig(
+        format='[%(asctime)s] %(levelname)-8s %(message)s', level=logging.INFO)
+
+    bot = Bot()
     while True:
         try:
-            run_bot()
+            logging.info('--- Literally 1984 bot started ---')
+            bot.run()
         except Exception as e:
             logging.critical('!!Exception raised!!\n' + str(e))
-            logging.critical('Restarting in 30 seconds...')
+            logging.info('--- Literally 1984 bot stopped ---')
+            logging.info('Restarting in 30 seconds...')
             time.sleep(30)
         else:
-            logging.info('--- Literally 1984 bot stopped ---')
             break
 
 
 def test_quotes():
-    qg = QuoteGen()
-    qg.load_file()
+    qg = QuoteGen(QUOTE_FILENAME)
     for _ in range(10):
         print(qg.get_next_quote())
     print("---")
@@ -162,7 +167,7 @@ def test_quotes():
 
 
 def test_cooldowns():
-    uc = UserCooldown()
+    uc = UserCooldown(5)
     for i in range(20):
         n = random.choice(("Alice", "Bob", "Steve"))
         print(i, n, uc.is_user_ready(n))
